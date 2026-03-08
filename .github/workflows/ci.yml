@@ -29,6 +29,9 @@ jobs:
           node-version: '20'
           cache: 'npm'
 
+      - name: Download latest TLC JAR
+        run: curl -fSL -o public/tlaplus-web-cheerpj.jar https://github.com/FedericoPonzi/tlaplus-web/releases/latest/download/tlaplus-web-cheerpj.jar
+
       - name: Install dependencies
         run: npm ci
 
