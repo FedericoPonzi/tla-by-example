@@ -40,9 +40,22 @@ jest.mock("@/lib/specs", () => ({
 }));
 
 describe("Home page", () => {
-  it("adds an anchor for the BlockingQueue Tutorial section", () => {
+  it("adds anchors for the major landing page sections", () => {
     render(<Home />);
-    const heading = screen.getByRole("heading", { name: "BlockingQueue Tutorial" });
-    expect(heading.closest("section")).toHaveAttribute("id", "blocking-queue-tutorial");
+    const introHeading = screen.getByRole("heading", { name: "How to Write TLA+" });
+    expect(introHeading.closest("section")).toHaveAttribute("id", "how-to-write-tla");
+
+    const blockingQueueHeading = screen.getByRole("heading", {
+      name: "BlockingQueue Tutorial",
+    });
+    expect(blockingQueueHeading.closest("section")).toHaveAttribute(
+      "id",
+      "blocking-queue-tutorial",
+    );
+
+    const communityHeading = screen.getByRole("heading", {
+      name: "Community Specifications",
+    });
+    expect(communityHeading).toHaveAttribute("id", "community-specifications");
   });
 });
