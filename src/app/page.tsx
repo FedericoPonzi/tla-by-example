@@ -54,7 +54,7 @@ export default function Home() {
         </section>
 
         {/* BlockingQueue Section */}
-        <section>
+        <section id="blocking-queue-tutorial">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             BlockingQueue Tutorial
           </h2>
