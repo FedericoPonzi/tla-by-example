@@ -24,7 +24,7 @@ export default function Home() {
 
       <main className="flex-1 mx-auto max-w-5xl px-6 py-12">
         {/* Intro Section */}
-        <section className="mb-16">
+        <section id="how-to-write-tla" className="mb-16">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             How to Write TLA+
           </h2>
@@ -54,7 +54,7 @@ export default function Home() {
         </section>
 
         {/* BlockingQueue Section */}
-        <section>
+        <section id="blocking-queue-tutorial">
           <h2 className="text-2xl font-bold text-gray-900 mb-2">
             BlockingQueue Tutorial
           </h2>
@@ -98,7 +98,7 @@ export default function Home() {
 
         {/* Community Specifications */}
         <section id="specifications" className="mt-16">
-          <h2 className="text-2xl font-bold text-gray-900 mb-2">
+          <h2 id="community-specifications" className="text-2xl font-bold text-gray-900 mb-2">
             Community Specifications
           </h2>
           <p className="text-gray-600 mb-6">
