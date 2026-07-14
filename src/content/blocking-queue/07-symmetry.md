@@ -7,8 +7,6 @@ commitUrl: "https://github.com/lemmy/BlockingQueue/commit/553287fd"
 ---
 We declare Producers and Consumers as **symmetry sets** to dramatically reduce the state space.
 
-**Warning:** Web-based TLC, which runs in the browser with CheerpJ, fails to report counterexamples for this symmetry example. Use the TLA+ VS Code extension, run TLC from the command-line, or another environment where TLC runs outside CheerpJ.
-
 ## What Changed
 
 The configuration now uses SYMMETRY to tell TLC that individual producer/consumer identities do not matter - only the count matters.
