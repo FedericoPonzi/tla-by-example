@@ -105,14 +105,3 @@ NEXT Next
 
 INVARIANT Invariant
 INVARIANT TypeInv
-
-CONSTANTS 
-    curBuf <- AliascurBuf
-    nxtBuf <- AliasnxtBuf
-    Waiting <- AliasWaiting
-    Scheduled <- AliasScheduled
-    ConsBuf <- AliasConsBuf
-    
-ALIAS AnimAlias
-
-INVARIANT AnimInv
