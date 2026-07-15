@@ -1,5 +1,6 @@
 ---
 slug: safety
+expect: violation
 title: "Safety - Detecting Deadlocks"
 section: blocking-queue
 commitSha: "ce99d16a"

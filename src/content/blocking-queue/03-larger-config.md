@@ -1,5 +1,6 @@
 ---
 slug: larger-config
+expect: violation
 title: "Larger Configuration"
 section: blocking-queue
 commitSha: "7d05fdfa"

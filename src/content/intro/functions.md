@@ -1,5 +1,6 @@
 ---
 slug: functions
+expect: violation
 title: Functions
 section: intro
 ---

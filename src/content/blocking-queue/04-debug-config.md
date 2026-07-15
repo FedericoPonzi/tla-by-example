@@ -1,5 +1,6 @@
 ---
 slug: debug-config
+expect: violation
 title: "Debug State Graph"
 section: blocking-queue
 commitSha: "534f3928"

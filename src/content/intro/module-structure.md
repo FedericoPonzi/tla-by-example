@@ -1,5 +1,6 @@
 ---
 slug: module-structure
+expect: violation
 title: Module Structure
 section: intro
 ---

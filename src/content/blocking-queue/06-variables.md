@@ -1,5 +1,6 @@
 ---
 slug: variables
+expect: violation
 title: "Constants to Variables"
 section: blocking-queue
 commitSha: "d48bd86a"

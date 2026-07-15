@@ -1,5 +1,6 @@
 ---
 slug: state-graph
+expect: success
 title: "State Graph (Minimum Config)"
 section: blocking-queue
 commitSha: "d21cd0fa"

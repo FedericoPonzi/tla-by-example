@@ -1,5 +1,6 @@
 ---
 slug: symmetry
+expect: violation
 title: "Symmetry Sets"
 section: blocking-queue
 commitSha: "553287fd"

@@ -1,5 +1,6 @@
 ---
 slug: sets
+expect: success
 title: Sets
 section: intro
 ---

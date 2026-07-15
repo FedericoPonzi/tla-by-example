@@ -1,5 +1,6 @@
 ---
 slug: sequences
+expect: success
 title: Sequences
 section: intro
 ---
