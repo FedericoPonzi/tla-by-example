@@ -1,5 +1,6 @@
 ---
 slug: variables-constants
+expect: violation
 title: "Variables & Constants"
 section: intro
 ---

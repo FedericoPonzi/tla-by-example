@@ -1,5 +1,6 @@
 ---
 slug: basic-operators
+expect: success
 title: Basic Operators
 section: intro
 ---

@@ -1,5 +1,6 @@
 ---
 slug: inequation
+expect: violation
 title: "Deadlock-Free Inequation"
 section: blocking-queue
 commitSha: "8e536cba"

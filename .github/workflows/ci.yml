@@ -78,3 +78,46 @@ jobs:
                 body,
               });
             }
+
+  # In-browser TLC regression suite: runs every lesson (that declares an
+  # `expect` outcome) through the real CheerpJ worker and asserts the result.
+  # Needs a real browser + network (CheerpJ CDN). Runs on PRs (so changes can
+  # be validated before merge) and on merges to main.
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Checkout Examples repo
+        uses: actions/checkout@v4
+        with:
+          repository: tlaplus/Examples
+          path: Examples
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Download latest TLC JAR
+        run: curl -fSL -o public/tlaplus-web-cheerpj.jar https://github.com/FedericoPonzi/tlaplus-web/releases/latest/download/tlaplus-web-cheerpj.jar
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Run lesson regression suite
+        run: npm run test:e2e
+
+      - name: Upload Playwright report on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: playwright-report/
+          retention-days: 14

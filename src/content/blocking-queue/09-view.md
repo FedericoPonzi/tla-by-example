@@ -1,5 +1,6 @@
 ---
 slug: view
+expect: violation
 title: "View Abstraction"
 section: blocking-queue
 commitSha: "02119f46"

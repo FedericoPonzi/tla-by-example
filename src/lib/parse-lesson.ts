@@ -69,6 +69,7 @@ export function parseLesson(markdown: string): Lesson {
 
   if (data.commitSha) lesson.commitSha = data.commitSha;
   if (data.commitUrl) lesson.commitUrl = data.commitUrl;
+  if (data.expect) lesson.expect = data.expect;
   if (extraTabs.length > 0) lesson.extraTabs = extraTabs;
 
   return lesson;

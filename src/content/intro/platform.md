@@ -1,5 +1,6 @@
 ---
 slug: platform
+expect: violation
 title: Welcome
 section: intro
 ---

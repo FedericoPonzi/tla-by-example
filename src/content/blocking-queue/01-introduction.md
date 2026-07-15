@@ -1,5 +1,6 @@
 ---
 slug: introduction
+expect: success
 title: Introduction
 section: blocking-queue
 commitSha: "11410864"

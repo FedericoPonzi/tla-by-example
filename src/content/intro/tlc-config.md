@@ -1,5 +1,6 @@
 ---
 slug: tlc-config
+expect: success
 title: TLC Configuration
 section: intro
 ---
