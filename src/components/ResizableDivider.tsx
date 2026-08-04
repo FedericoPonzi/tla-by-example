@@ -54,6 +54,26 @@ export default function ResizableDivider({
     document.body.style.userSelect = "none";
   }, [direction, onResize, onDragStart, onDragEnd]);
 
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const step = e.shiftKey ? 50 : 10;
+      let delta: number | null = null;
+
+      if (direction === "horizontal") {
+        if (e.key === "ArrowLeft") delta = -step;
+        else if (e.key === "ArrowRight") delta = step;
+      } else {
+        if (e.key === "ArrowUp") delta = -step;
+        else if (e.key === "ArrowDown") delta = step;
+      }
+
+      if (delta === null) return;
+      e.preventDefault();
+      onResize(delta);
+    },
+    [direction, onResize]
+  );
+
   const isH = direction === "horizontal";
   // direction describes which way the handle moves; aria-orientation describes
   // the separator line itself, which runs perpendicular to that movement.
@@ -62,6 +82,8 @@ export default function ResizableDivider({
   return (
     <div
       onMouseDown={onMouseDown}
+      onKeyDown={onKeyDown}
+      tabIndex={0}
       role="separator"
       aria-orientation={ariaOrientation}
       aria-label={ariaLabel}
