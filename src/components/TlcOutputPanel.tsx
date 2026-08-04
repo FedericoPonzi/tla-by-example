@@ -1,27 +1,56 @@
 "use client";
 
+import { useCallback, useState } from "react";
+import ResizableDivider from "@/components/ResizableDivider";
 import type { TlcRunnerState } from "@/lib/useTlcRunner";
 
 interface TlcOutputPanelProps {
   runner: TlcRunnerState;
 }
 
+const COLLAPSED = 32;
+const DEFAULT_OPEN = 192;
+const MIN_OPEN = 64;
+
 export default function TlcOutputPanel({ runner }: TlcOutputPanelProps) {
+  const [openHeight, setOpenHeight] = useState(DEFAULT_OPEN);
+  const [isDragging, setIsDragging] = useState(false);
+
+  const handleResize = useCallback((delta: number) => {
+    // Dragging up moves clientY (and thus delta) negative; growing the panel
+    // means subtracting delta, not adding it.
+    setOpenHeight((h) => {
+      // Surrounding chrome (Navbar ~53px + Footer ~69px + Playground tab bar
+      // ~37px) plus a ~160px editor floor, so the editor keeps usable room.
+      const maxOpen = Math.max(MIN_OPEN, window.innerHeight - 320);
+      return Math.min(maxOpen, Math.max(MIN_OPEN, h - delta));
+    });
+  }, []);
+
+  const height = runner.outputOpen ? openHeight : COLLAPSED;
+
   return (
     <div
-      className={`border-t border-gray-200 bg-gray-50 transition-all duration-300 ${
-        runner.outputOpen ? "h-48" : "h-8"
-      }`}
+      className={`flex flex-col flex-shrink-0 bg-gray-50 ${isDragging ? "" : "transition-all duration-300"}`}
+      style={{ height: `${height}px` }}
     >
+      {runner.outputOpen && (
+        <ResizableDivider
+          direction="vertical"
+          onResize={handleResize}
+          onDragStart={() => setIsDragging(true)}
+          onDragEnd={() => setIsDragging(false)}
+        />
+      )}
       <button
         onClick={() => runner.setOutputOpen(!runner.outputOpen)}
-        className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700"
+        className="flex w-full items-center gap-2 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 flex-shrink-0"
       >
         <span className={`transition-transform ${runner.outputOpen ? "rotate-180" : ""}`}>▼</span>
         TLC Output
       </button>
       {runner.outputOpen && (
-        <div className="h-[calc(100%-2rem)] overflow-auto px-3 pb-2">
+        <div className="flex-1 min-h-0 overflow-auto px-3 pb-2">
           <pre className="text-xs font-mono text-gray-700 whitespace-pre-wrap leading-relaxed">
             {runner.rawOutput || "Press ▶ Run TLC to check the model."}
           </pre>

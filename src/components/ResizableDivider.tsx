@@ -5,9 +5,11 @@ import { useCallback, useRef } from "react";
 interface ResizableDividerProps {
   direction: "horizontal" | "vertical";
   onResize: (delta: number) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
 }
 
-export default function ResizableDivider({ direction, onResize }: ResizableDividerProps) {
+export default function ResizableDivider({ direction, onResize, onDragStart, onDragEnd }: ResizableDividerProps) {
   const dragging = useRef(false);
   const lastPos = useRef(0);
 
@@ -15,6 +17,7 @@ export default function ResizableDivider({ direction, onResize }: ResizableDivid
     e.preventDefault();
     dragging.current = true;
     lastPos.current = direction === "horizontal" ? e.clientX : e.clientY;
+    onDragStart?.();
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!dragging.current) return;
@@ -30,19 +33,26 @@ export default function ResizableDivider({ direction, onResize }: ResizableDivid
       document.removeEventListener("mouseup", onMouseUp);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
+      onDragEnd?.();
     };
 
     document.addEventListener("mousemove", onMouseMove);
     document.addEventListener("mouseup", onMouseUp);
     document.body.style.cursor = direction === "horizontal" ? "col-resize" : "row-resize";
     document.body.style.userSelect = "none";
-  }, [direction, onResize]);
+  }, [direction, onResize, onDragStart, onDragEnd]);
 
   const isH = direction === "horizontal";
+  // direction describes which way the handle moves; aria-orientation describes
+  // the separator line itself, which runs perpendicular to that movement.
+  const ariaOrientation = isH ? "vertical" : "horizontal";
 
   return (
     <div
       onMouseDown={onMouseDown}
+      role="separator"
+      aria-orientation={ariaOrientation}
+      aria-label="Resize panel"
       style={{
         width: isH ? "4px" : "100%",
         height: isH ? "100%" : "4px",
