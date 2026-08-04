@@ -156,4 +156,65 @@ describe("TlcOutputPanel", () => {
     render(<Harness initialOpen={false} />);
     expect(screen.queryByRole("separator")).toBeNull();
   });
+
+  it("carries a top border only while collapsed, since the resize handle supplies the seam while open", () => {
+    render(<Harness initialOpen={false} />);
+    const root = getPanelRoot();
+
+    // A border has no other observable signal under jsdom (no layout, no CSS
+    // computation), so asserting the Tailwind class directly is the right
+    // tool here, unlike the general rule against class-name assertions.
+    expect(root).toHaveClass("border-t");
+
+    fireEvent.click(screen.getByRole("button", { name: /TLC Output/i })); // expand
+    expect(root).not.toHaveClass("border-t");
+  });
+
+  it("announces the separator with aria-orientation=horizontal, since the vertical drag direction produces a horizontal line", () => {
+    render(<Harness initialOpen={true} />);
+    const separator = screen.getByRole("separator");
+
+    expect(separator).toHaveAttribute("aria-orientation", "horizontal");
+  });
+
+  it("re-clamps the remembered open height when the window shrinks after a drag", () => {
+    Object.defineProperty(window, "innerHeight", {
+      value: 1000,
+      writable: true,
+      configurable: true,
+    });
+
+    render(<Harness initialOpen={true} />);
+    const root = getPanelRoot();
+    const separator = screen.getByRole("separator");
+
+    fireEvent.mouseDown(separator, { clientY: 1000 });
+    fireEvent.mouseMove(document, { clientY: 592 }); // up 408 -> 192 + 408 = 600px
+    fireEvent.mouseUp(document);
+    expect(root.style.height).toBe("600px");
+
+    Object.defineProperty(window, "innerHeight", {
+      value: 500,
+      writable: true,
+      configurable: true,
+    });
+    fireEvent(window, new Event("resize"));
+
+    expect(root.style.height).toBe("180px"); // new ceiling: 500 - 320
+  });
+
+  it("ends the drag on a window blur, so a later mousemove with no button held does not keep resizing the panel", () => {
+    render(<Harness initialOpen={true} />);
+    const root = getPanelRoot();
+    const separator = screen.getByRole("separator");
+
+    fireEvent.mouseDown(separator, { clientY: 500 });
+    fireEvent.mouseMove(document, { clientY: 400 }); // up 100 -> 292px
+    expect(root.style.height).toBe("292px");
+
+    fireEvent(window, new Event("blur"));
+
+    fireEvent.mouseMove(document, { clientY: 100 }); // would grow further if the drag were still live
+    expect(root.style.height).toBe("292px");
+  });
 });

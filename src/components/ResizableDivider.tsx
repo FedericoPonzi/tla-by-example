@@ -7,9 +7,16 @@ interface ResizableDividerProps {
   onResize: (delta: number) => void;
   onDragStart?: () => void;
   onDragEnd?: () => void;
+  ariaLabel?: string;
 }
 
-export default function ResizableDivider({ direction, onResize, onDragStart, onDragEnd }: ResizableDividerProps) {
+export default function ResizableDivider({
+  direction,
+  onResize,
+  onDragStart,
+  onDragEnd,
+  ariaLabel = "Resize panel",
+}: ResizableDividerProps) {
   const dragging = useRef(false);
   const lastPos = useRef(0);
 
@@ -27,17 +34,22 @@ export default function ResizableDivider({ direction, onResize, onDragStart, onD
       onResize(delta);
     };
 
-    const onMouseUp = () => {
+    // Shared by mouseup and a missed-mouseup window blur; the dragging.current
+    // guard makes it idempotent so whichever fires second is a no-op.
+    const endDrag = () => {
+      if (!dragging.current) return;
       dragging.current = false;
       document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("mouseup", endDrag);
+      window.removeEventListener("blur", endDrag);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
       onDragEnd?.();
     };
 
     document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mouseup", endDrag);
+    window.addEventListener("blur", endDrag);
     document.body.style.cursor = direction === "horizontal" ? "col-resize" : "row-resize";
     document.body.style.userSelect = "none";
   }, [direction, onResize, onDragStart, onDragEnd]);
@@ -52,7 +64,7 @@ export default function ResizableDivider({ direction, onResize, onDragStart, onD
       onMouseDown={onMouseDown}
       role="separator"
       aria-orientation={ariaOrientation}
-      aria-label="Resize panel"
+      aria-label={ariaLabel}
       style={{
         width: isH ? "4px" : "100%",
         height: isH ? "100%" : "4px",

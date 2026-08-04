@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import ResizableDivider from "@/components/ResizableDivider";
 import type { TlcRunnerState } from "@/lib/useTlcRunner";
 
@@ -12,6 +12,13 @@ const COLLAPSED = 32;
 const DEFAULT_OPEN = 192;
 const MIN_OPEN = 64;
 
+// Surrounding chrome (Navbar ~53px + Footer ~69px + Playground tab bar ~37px)
+// plus a ~160px editor floor, so the editor keeps usable room. Shared by the
+// drag handler and the window resize listener so they can't drift apart.
+function getMaxOpen() {
+  return Math.max(MIN_OPEN, window.innerHeight - 320);
+}
+
 export default function TlcOutputPanel({ runner }: TlcOutputPanelProps) {
   const [openHeight, setOpenHeight] = useState(DEFAULT_OPEN);
   const [isDragging, setIsDragging] = useState(false);
@@ -19,19 +26,21 @@ export default function TlcOutputPanel({ runner }: TlcOutputPanelProps) {
   const handleResize = useCallback((delta: number) => {
     // Dragging up moves clientY (and thus delta) negative; growing the panel
     // means subtracting delta, not adding it.
-    setOpenHeight((h) => {
-      // Surrounding chrome (Navbar ~53px + Footer ~69px + Playground tab bar
-      // ~37px) plus a ~160px editor floor, so the editor keeps usable room.
-      const maxOpen = Math.max(MIN_OPEN, window.innerHeight - 320);
-      return Math.min(maxOpen, Math.max(MIN_OPEN, h - delta));
-    });
+    setOpenHeight((h) => Math.min(getMaxOpen(), Math.max(MIN_OPEN, h - delta)));
+  }, []);
+
+  // Re-clamp the remembered height if the viewport shrinks after a drag.
+  useEffect(() => {
+    const handleWindowResize = () => setOpenHeight((h) => Math.min(getMaxOpen(), h));
+    window.addEventListener("resize", handleWindowResize);
+    return () => window.removeEventListener("resize", handleWindowResize);
   }, []);
 
   const height = runner.outputOpen ? openHeight : COLLAPSED;
 
   return (
     <div
-      className={`flex flex-col flex-shrink-0 bg-gray-50 ${isDragging ? "" : "transition-all duration-300"}`}
+      className={`flex flex-col flex-shrink-0 bg-gray-50 ${runner.outputOpen ? "" : "border-t border-gray-200"} ${isDragging ? "" : "transition-all duration-300"}`}
       style={{ height: `${height}px` }}
     >
       {runner.outputOpen && (
@@ -40,6 +49,7 @@ export default function TlcOutputPanel({ runner }: TlcOutputPanelProps) {
           onResize={handleResize}
           onDragStart={() => setIsDragging(true)}
           onDragEnd={() => setIsDragging(false)}
+          ariaLabel="Resize TLC output panel"
         />
       )}
       <button
