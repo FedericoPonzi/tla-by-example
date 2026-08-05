@@ -5,9 +5,18 @@ import { useCallback, useRef } from "react";
 interface ResizableDividerProps {
   direction: "horizontal" | "vertical";
   onResize: (delta: number) => void;
+  onDragStart?: () => void;
+  onDragEnd?: () => void;
+  ariaLabel?: string;
 }
 
-export default function ResizableDivider({ direction, onResize }: ResizableDividerProps) {
+export default function ResizableDivider({
+  direction,
+  onResize,
+  onDragStart,
+  onDragEnd,
+  ariaLabel = "Resize panel",
+}: ResizableDividerProps) {
   const dragging = useRef(false);
   const lastPos = useRef(0);
 
@@ -15,6 +24,7 @@ export default function ResizableDivider({ direction, onResize }: ResizableDivid
     e.preventDefault();
     dragging.current = true;
     lastPos.current = direction === "horizontal" ? e.clientX : e.clientY;
+    onDragStart?.();
 
     const onMouseMove = (ev: MouseEvent) => {
       if (!dragging.current) return;
@@ -24,25 +34,59 @@ export default function ResizableDivider({ direction, onResize }: ResizableDivid
       onResize(delta);
     };
 
-    const onMouseUp = () => {
+    // Shared by mouseup and a missed-mouseup window blur; the dragging.current
+    // guard makes it idempotent so whichever fires second is a no-op.
+    const endDrag = () => {
+      if (!dragging.current) return;
       dragging.current = false;
       document.removeEventListener("mousemove", onMouseMove);
-      document.removeEventListener("mouseup", onMouseUp);
+      document.removeEventListener("mouseup", endDrag);
+      window.removeEventListener("blur", endDrag);
       document.body.style.cursor = "";
       document.body.style.userSelect = "";
+      onDragEnd?.();
     };
 
     document.addEventListener("mousemove", onMouseMove);
-    document.addEventListener("mouseup", onMouseUp);
+    document.addEventListener("mouseup", endDrag);
+    window.addEventListener("blur", endDrag);
     document.body.style.cursor = direction === "horizontal" ? "col-resize" : "row-resize";
     document.body.style.userSelect = "none";
-  }, [direction, onResize]);
+  }, [direction, onResize, onDragStart, onDragEnd]);
+
+  const onKeyDown = useCallback(
+    (e: React.KeyboardEvent) => {
+      const step = e.shiftKey ? 50 : 10;
+      let delta: number | null = null;
+
+      if (direction === "horizontal") {
+        if (e.key === "ArrowLeft") delta = -step;
+        else if (e.key === "ArrowRight") delta = step;
+      } else {
+        if (e.key === "ArrowUp") delta = -step;
+        else if (e.key === "ArrowDown") delta = step;
+      }
+
+      if (delta === null) return;
+      e.preventDefault();
+      onResize(delta);
+    },
+    [direction, onResize]
+  );
 
   const isH = direction === "horizontal";
+  // direction describes which way the handle moves; aria-orientation describes
+  // the separator line itself, which runs perpendicular to that movement.
+  const ariaOrientation = isH ? "vertical" : "horizontal";
 
   return (
     <div
       onMouseDown={onMouseDown}
+      onKeyDown={onKeyDown}
+      tabIndex={0}
+      role="separator"
+      aria-orientation={ariaOrientation}
+      aria-label={ariaLabel}
       style={{
         width: isH ? "4px" : "100%",
         height: isH ? "100%" : "4px",
