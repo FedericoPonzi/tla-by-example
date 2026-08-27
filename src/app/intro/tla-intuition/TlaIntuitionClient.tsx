@@ -495,7 +495,8 @@ export default function TlaIntuitionClient({ description, spec, prev, next }: Pr
                 </ol>
                 <p className="text-gray-700 leading-relaxed mb-3">
                   This is the solution! Fill the big jug, pour into
-                  the small, empty the small, pour again, fill the big again — and
+                  the small, empty the small, pour again, fill the big again,
+                  pour into the small 1 gallon — and
                   you end up with exactly 4 gallons.
                 </p>
 
