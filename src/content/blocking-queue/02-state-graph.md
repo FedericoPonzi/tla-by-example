@@ -3,8 +3,8 @@ slug: state-graph
 expect: success
 title: "State Graph (Minimum Config)"
 section: blocking-queue
-commitSha: "d21cd0fa"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/d21cd0fa"
+commitSha: "9dfadd9d"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/9dfadd9d"
 ---
 This is the first version of the BlockingQueue specification. It models a bounded buffer shared between producers and consumers.
 
@@ -19,13 +19,17 @@ The spec uses a **wait set** pattern: threads that cannot proceed (producer when
 
 ## What to Look For
 
-Run TLC and observe the state graph. With this minimal configuration, you can trace through every possible state by hand.
+Run TLC and inspect the output. With this minimal configuration, you can trace through every reachable state by hand using the graph below. The browser does not generate a graph; the image comes from the upstream tutorial.
 
 ## State Graph
 
 The model uses the minimal parameters (1 producer, 1 consumer, and a buffer of size one). When TLC generates the state graph, we can visually verify that no deadlock is possible with this configuration:
 
 ![State graph p1c1b1](/bq-images/p1c1b1.svg)
+
+## Expected Result
+
+TLC completes without a deadlock and reports 4 distinct states. Try adding a second consumer to see why success for this minimal model does not imply success for every configuration.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------

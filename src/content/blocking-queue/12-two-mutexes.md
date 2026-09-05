@@ -1,31 +1,36 @@
 ---
 slug: two-mutexes
-title: "Two Mutexes"
+expect: success
+title: "(Logically) Two Mutexes"
 section: blocking-queue
-commitSha: "a400b585"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/a400b585"
+commitSha: "fe230e23"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/fe230e23"
 ---
-The final bugfix: using (logically) two separate mutexes for producers and consumers.
+Upstream v13 calls this fix **"(Logically) two mutexes"**: separate the waiting producers from the waiting consumers so each operation notifies the other kind of thread.
 
 ## What Changed
 
-Instead of a single wait set for all threads, we separate waiting producers from waiting consumers.
+The abstract spec keeps one `waitSet`. `NotifyOther(Consumers)` selects a waiting consumer after a put, and `NotifyOther(Producers)` selects a waiting producer after a get. There is no need to represent two separate wait sets at this level.
 
 ## Why This Matters
 
-With a single mutex/condition variable, notifyAll() wakes up ALL threads - including those that definitely cannot proceed. With separate conditions for "buffer not full" and "buffer not empty," we can be more precise.
+With a single condition, `notifyAll()` wakes up all waiters, including those that cannot proceed. Separate conditions for "buffer not full" and "buffer not empty" let us signal only the relevant group.
+
+The upstream title describes the logical separation of waiters, not a recommendation to protect shared buffer updates with unrelated locks. Its later Java implementation uses **one `ReentrantLock` and two `Condition` objects**; its C implementation likewise uses one mutex and two condition variables. Both producers and consumers must still synchronize access to the shared buffer.
 
 ## Summary of the Bugfix Journey
 
-1. **v11**: Model the real non-deterministic behavior of notify()
-2. **v12**: Fix with notifyAll() - correct but inefficient
-3. **v13**: Optimize with separate condition variables - correct AND efficient
+1. **v11**: Try independently scheduled notifications; the all-waiting invariant still fails.
+2. **v12**: Fix the modeled deadlock with `notifyAll()`, at the cost of unnecessary wakeups.
+3. **v13**: Notify only the opposite kind of waiter, avoiding those unnecessary wakeups.
 
 This is exactly the kind of bug that TLA+ excels at finding: subtle concurrency issues that only manifest in specific interleavings.
 
-Remove notifyAll and instead introduce two mutexes (one for Producers and one for Consumers). A Consumer will notify the subset of Producers waiting on the Producer mutex (vice versa for a Producer).
+## Expected Result
 
-The spec does not have to introduce two mutexes. Instead, we can just pick the right thread type from the set of waiting threads. This fix completely solves the bug, but are we fully satisfied yet?
+TLC completes without a deadlock or invariant violation for the supplied model. Try different positive capacities and nonempty producer/consumer sets.
+
+Are we fully satisfied? As upstream v14 points out, finite runs alone cannot prove the fix for arbitrary parameters. The upstream tutorial continues with TLAPS proofs and, later, starvation and fairness. Those topics are beyond this shortened walkthrough.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------

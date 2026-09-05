@@ -1,5 +1,6 @@
 ---
 slug: records
+expect: success
 title: Records
 section: intro
 ---
@@ -54,23 +55,30 @@ is the same as:
 
 ## Try It
 
-The spec models a simple user account system with records.
+The spec models user accounts with a small maximum balance so the reachable state space is finite. `Deposit` checks the limit before changing a balance; a type invariant alone would only detect an out-of-range balance, not prevent it.
+
+When every account is inactive, `Finished` permits an unchanged terminal state. This deliberate stuttering step models a completed system rather than an unexpected deadlock.
+
+## Expected Result
+
+TLC completes without errors for two users and `MaxBalance = 3`. Try removing the upper-bound guard from `Deposit`; `TypeOK` then fails when a balance exceeds `MaxBalance`.
 
 ---TLA_BY_EXAMPLE_SPEC---
 ----------------------------- MODULE Records ---------------------------------
 EXTENDS Naturals
 
-CONSTANT Users
+CONSTANTS Users, MaxBalance
 
 VARIABLE accounts
 
-TypeOK == accounts \in [Users -> [balance: Nat, active: BOOLEAN]]
+TypeOK == accounts \in [Users -> [balance: 0..MaxBalance, active: BOOLEAN]]
 
-Init == accounts = [u \in Users |-> [balance |-> 100, active |-> TRUE]]
+Init == accounts = [u \in Users |-> [balance |-> MaxBalance, active |-> TRUE]]
 
 Deposit(u, amt) ==
     /\ accounts[u].active
-    /\ amt \in 1..50
+    /\ amt \in 1..MaxBalance
+    /\ accounts[u].balance + amt <= MaxBalance
     /\ accounts' = [accounts EXCEPT ![u].balance = @ + amt]
 
 Withdraw(u, amt) ==
@@ -82,10 +90,14 @@ Deactivate(u) ==
     /\ accounts[u].active
     /\ accounts' = [accounts EXCEPT ![u].active = FALSE]
 
-Next == \E u \in Users :
-          \/ \E amt \in 1..50 : Deposit(u, amt)
-          \/ \E amt \in 1..50 : Withdraw(u, amt)
-          \/ Deactivate(u)
+Finished == /\ \A u \in Users : ~accounts[u].active
+            /\ UNCHANGED accounts
+
+Next == \/ \E u \in Users :
+             \/ \E amt \in 1..MaxBalance : Deposit(u, amt)
+             \/ \E amt \in 1..MaxBalance : Withdraw(u, amt)
+             \/ Deactivate(u)
+        \/ Finished
 
 NoNegativeBalances == \A u \in Users : accounts[u].balance >= 0
 
@@ -93,6 +105,7 @@ NoNegativeBalances == \A u \in Users : accounts[u].balance >= 0
 
 ---TLA_BY_EXAMPLE_CFG---
 CONSTANT Users = {alice, bob}
+CONSTANT MaxBalance = 3
 INIT Init
 NEXT Next
 INVARIANT TypeOK

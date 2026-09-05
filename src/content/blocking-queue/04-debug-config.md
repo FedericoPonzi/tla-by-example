@@ -3,18 +3,24 @@ slug: debug-config
 expect: violation
 title: "Debug State Graph"
 section: blocking-queue
-commitSha: "534f3928"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/534f3928"
+commitSha: "0f777ce3"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/0f777ce3"
 ---
 A debug configuration with 2 producers, 1 consumer, and buffer capacity 1.
 
 ## What Changed
 
-Again just a configuration change. Different configurations expose different behaviors. The deadlock might be easier or harder to find depending on the number of producers and consumers.
+Upstream v04 adds an interactive debugger using `TLCExt!PickSuccessor` in `BlockingQueueDebug.tla`. Its debug configuration is p2c1b1. The playground uses those same constants with the base `BlockingQueue` spec, without the desktop-only interactive action constraint.
 
-With the help of TLCExt!PickSuccessor we build us a debugger with which we study the state graph interactively. We learn that with configuration p2c1b1 there are two deadlock states:
+The upstream debugger lets us explore both deadlock states for p2c1b1:
 
 ![PickSuccessor](/bq-images/v04-PickSuccessor.gif)
+
+To reproduce the debugger rather than the browser run, use the linked upstream revision's `BlockingQueueDebug.tla/.cfg` and the [CommunityModules](https://github.com/tlaplus/CommunityModules) library containing `TLCExt`.
+
+## Expected Result
+
+The browser reports **Deadlock reached** and stops at the first deadlock. Unlike the recording, it does not prompt you to choose a successor. Try returning to p1c1b1 to see the deadlock disappear.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------
@@ -84,8 +90,8 @@ Next == \E t \in RunningThreads: \/ /\ t \in Producers
 \* SPECIFICATION
 CONSTANTS
     BufCapacity = 1
-    Producers = {p1}
-    Consumers = {c1,c2}
+    Producers = {p1,p2}
+    Consumers = {c1}
 
 INIT Init
 NEXT Next

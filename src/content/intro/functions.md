@@ -58,6 +58,12 @@ f' = [f EXCEPT ![2] = @ + 1]
 
 The spec models a simple key-value store using TLA+ functions.
 
+## Expected Result
+
+TLC reports that `AllBounded` is violated when a key's value reaches 12. `Put` is bounded, but `Increment` is not; `TypeOK` still holds because 12 is a natural number.
+
+Try adding `store[k] < 11` as a guard in `Increment`. The resulting finite model should complete without violating either invariant.
+
 ---TLA_BY_EXAMPLE_SPEC---
 ---------------------------- MODULE KeyValue ---------------------------------
 EXTENDS Naturals

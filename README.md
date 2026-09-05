@@ -25,3 +25,5 @@ npm run build     # static export to out/
 ```
 
 Requires Node.js 20+.
+
+See [the lesson authoring guide](dev/lessons.md) for the Markdown format, lesson registration, expected outcomes, and BlockingQueue source alignment.

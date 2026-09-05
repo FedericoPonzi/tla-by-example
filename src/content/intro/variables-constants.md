@@ -43,11 +43,17 @@ TypeOK == /\ x \in Nat
           /\ y \in 1..N
 ```
 
-Since TLA+ has no types, `TypeOK` is just a formula like any other. TLC checks it as an invariant at every reachable state, making it a useful way to catch bugs early.
+Since TLA+ has no types, `TypeOK` is just a formula like any other. When enabled with `INVARIANT TypeOK` in the configuration, TLC checks it at every reachable state. Merely defining an operator named `TypeOK` does not enable a check.
 
 ## Try It
 
-The spec on the right uses both variables and constants. Check the `Spec.cfg` tab to see how the constant `N` is assigned a value.
+The spec on the right uses both variables and constants. Check the `VarsAndConsts.cfg` tab to see how the constant `N` is assigned a value.
+
+## Expected Result
+
+With `N = 3`, TLC reports **Deadlock reached** at `count = 2, total = 5`. `Increment` requires `total < 5`, while `Reset` requires `count = N`, so neither is enabled. `TypeOK` still holds: type correctness does not imply that the system can keep making progress.
+
+Try changing `Reset` so it also sets `total' = 0`. The counters can then cycle without reaching this deadlock.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE VarsAndConsts ----------------------------

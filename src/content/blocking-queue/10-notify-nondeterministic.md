@@ -1,25 +1,28 @@
 ---
 slug: notify-nondeterministic
+expect: violation
 title: "Non-deterministic Notification"
 section: blocking-queue
-commitSha: "ea2a2303"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/ea2a2303"
+commitSha: "be91c6d6"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/be91c6d6"
 ---
-A critical bugfix: the notification mechanism now non-deterministically selects which waiting thread to wake up.
+Upstream v11 tries an additional, non-deterministically scheduled notification as a workaround for the blocking-queue bug. It is an attempted fix, not the final solution.
 
 ## What Changed
 
-Previously, the spec assumed a specific thread would be notified. Now it models the real behavior of notify() in Java: any one of the waiting threads can be selected.
+`Notify` already used `\E x \in waitSet` to choose any waiting thread. The new choice is in `Next`: notification can now happen as a separate step, without a producer adding an item or a consumer removing one.
 
-## The Bug
+## Why This Is Not the Final Fix
 
-If we always notify a specific thread, we miss executions where a different thread gets notified - which could lead to deadlock.
+As the upstream tutorial explains, we can keep waking the wrong kind of thread, which cannot perform useful work and goes back to waiting. Adding a possible wakeup does not guarantee progress.
 
-## Key Concept
+There is an important distinction in this version: `Invariant` still forbids all threads being in `waitSet`, but that state is no longer a TLC deadlock. The independent `Notify` step remains enabled and can wake someone. Even when `waitSet` is empty, that step permits an unchanged state.
 
-When modeling a system, you must capture **all** possible behaviors, not just the ones you expect. Non-determinism is how TLA+ models situations where the system can make any of several choices.
+The supplied invariant checks a state condition, not eventual progress. A liveness claim would require a temporal property and appropriate fairness assumptions; upstream explores these in later lessons.
 
-Non-deterministically notify waiting threads in an attempt to fix the deadlock situation. This attempt fails because we might end up waking the wrong thread up over and over again.
+## Expected Result
+
+TLC reports an `Invariant` violation because all threads can still be waiting. Try removing only `INVARIANT Invariant` from the configuration: TLC completes without a built-in deadlock error, but that does not establish that useful work must continue.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------
@@ -75,7 +78,7 @@ Init == /\ buffer = <<>>
 
 (* Then, pick a thread out of all running threads and have it do its thing. *)
 Next ==
-     \/ Notify /\ UNCHANGED buffer \* At each step notify all waiting threads.
+     \/ Notify /\ UNCHANGED buffer
      \/ \E t \in RunningThreads: \/ /\ t \in Producers
                                     /\ Put(t, t) \* Add some data to buffer
                                  \/ /\ t \in Consumers
@@ -88,7 +91,7 @@ TypeInv == /\ buffer \in Seq(Producers)
            /\ Len(buffer) \in 0..BufCapacity
            /\ waitSet \subseteq (Producers \cup Consumers)
 
-(* No Deadlock *)
+(* The original all-waiting invariant, not a deadlock test with this Next. *)
 Invariant == waitSet # (Producers \cup Consumers)
 
 =============================================================================

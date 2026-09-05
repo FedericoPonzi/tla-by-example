@@ -41,4 +41,29 @@ describe("Lesson data", () => {
       expect(lesson.section).toBe("intro");
     }
   });
+
+  it("all runnable lessons declare an expected TLC outcome", () => {
+    for (const lesson of [...introLessons, ...blockingQueueLessons]) {
+      if (!lesson.spec || !lesson.cfg) continue;
+      expect({ slug: lesson.slug, outcome: lesson.expect }).toEqual({
+        slug: lesson.slug,
+        outcome: expect.stringMatching(/^(success|violation)$/),
+      });
+    }
+  });
+
+  it("uses the upstream p2c1b1 configuration for the debugger lesson", () => {
+    const lesson = blockingQueueLessons.find((l) => l.slug === "debug-config");
+    expect(lesson?.cfg).toMatch(/BufCapacity\s*=\s*1/);
+    expect(lesson?.cfg).toMatch(/Producers\s*=\s*\{p1,\s*p2\}/);
+    expect(lesson?.cfg).toMatch(/Consumers\s*=\s*\{c1\}/);
+  });
+
+  it("starts with the buggy single-condition C implementation", () => {
+    const lesson = blockingQueueLessons.find((l) => l.slug === "introduction");
+    const source = lesson?.extraTabs?.find((tab) => tab.label === "C")?.content;
+    expect(source).toContain("pthread_cond_t modify;");
+    expect(source?.match(/pthread_cond_wait\(&modify, &mutex\)/g)).toHaveLength(2);
+    expect(source?.match(/pthread_cond_signal\(&modify\)/g)).toHaveLength(2);
+  });
 });

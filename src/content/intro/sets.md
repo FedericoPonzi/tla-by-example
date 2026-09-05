@@ -65,6 +65,10 @@ Example: `{x * 2 : x \in 1..3}` gives `{2, 4, 6}`
 
 The spec on the right demonstrates various set operations. Run TLC to verify the invariants.
 
+## Expected Result
+
+TLC completes without errors and finds 8 distinct states: all subsets of the three colors. Try adding a fourth color to `Colors`; the model then has 16 distinct states.
+
 ---TLA_BY_EXAMPLE_SPEC---
 ------------------------------- MODULE Sets ----------------------------------
 EXTENDS Naturals, FiniteSets

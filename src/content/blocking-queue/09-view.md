@@ -3,8 +3,8 @@ slug: view
 expect: violation
 title: "View Abstraction"
 section: blocking-queue
-commitSha: "02119f46"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/02119f46"
+commitSha: "e4911b6d"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/e4911b6d"
 ---
 Define a **view** that abstracts the buffer into a counter, reducing the state space.
 
@@ -16,7 +16,21 @@ A VIEW directive is added to the configuration. The view maps each state to an a
 
 The buffer content does not matter for deadlock checking - only its length does. By abstracting the buffer to its length, we dramatically reduce the state space while preserving the properties we care about.
 
-We exploit the insight that the order of elements in the (fifo) buffer is irrelevant for the correctness of the algorithm. In other words, we can abstract the buffer into a simple counter of elements. With this abstraction, the state-space for the current config shrinks from 2940 to 1797 distinct states.
+The order and identity of elements in the FIFO buffer are irrelevant to this **deadlock-freedom** question. They would matter for a property about which item is returned, such as FIFO ordering. A view is not automatically safe for every property.
+
+With this abstraction, the **complete** state space for the current configuration shrinks from 2940 to 1797 distinct states, as reported upstream.
+
+## Expected Result
+
+The browser still reports an `Invariant` violation and stops at the first counterexample. Try removing `VIEW View` to compare the partial exploration counts.
+
+To reproduce the complete totals, save this lesson's spec and configuration as `BlockingQueue.tla/.cfg` alongside `tla2tools.jar`, then run:
+
+```bash
+java -jar tla2tools.jar -workers 1 -deadlock -continue BlockingQueue
+```
+
+This continues after invariant violations and disables the separate built-in deadlock stopping condition. Compare runs with and without `VIEW View`; leave `SYMMETRY Sym` enabled in both.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------

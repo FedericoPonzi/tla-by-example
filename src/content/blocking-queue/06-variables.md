@@ -3,20 +3,32 @@ slug: variables
 expect: violation
 title: "Constants to Variables"
 section: blocking-queue
-commitSha: "d48bd86a"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/d48bd86a"
+commitSha: "2c9d8870"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/2c9d8870"
 ---
 In this step, we convert some constants into variables to explore a wider range of configurations automatically.
 
 ## What Changed
 
-Instead of fixing the buffer capacity as a constant, the spec now allows TLC to explore different values. This lets us check the invariant across many configurations in a single run.
+The constants now bound the choices for three new variables: `producers`, `consumers`, and `bufCapacity`. `Init` chooses nonempty subsets of the process sets and a capacity in `1..BufCapacity`. `Next` leaves these variables unchanged, so each behavior uses one fixed configuration rather than changing its configuration while running.
 
 ## Key Insight
 
 Converting constants to variables is a powerful technique: it lets TLC explore configurations you might not have thought to check manually.
 
-As Michel Charpentier points out, BlockingQueue is deadlock-free under some configurations, but model checking is not helpful with finding the underlying mathematical function. However, we can at least ask TLC to find as many data points as possible. This rewrite increases the complete state space to 57254 distinct states, but TLC continues to find the deadlock behavior.
+As Michel Charpentier points out, BlockingQueue is deadlock-free under some configurations. TLC can supply data points from finite models to help us infer a general relationship, but those data points are not a proof for unbounded parameters.
+
+## Expected Result
+
+The browser still reports an `Invariant` violation and stops at the first counterexample. There are 315 initial states for the supplied bounds. Try reducing the sets or capacity bound to see how many initial configurations remain.
+
+The complete state space has **57254 distinct states**, as reported upstream. To explore it past invariant violations, save this lesson's editors as `BlockingQueue.tla` and `BlockingQueue.cfg` alongside a local `tla2tools.jar`, then run:
+
+```bash
+java -jar tla2tools.jar -workers 1 -deadlock -continue BlockingQueue
+```
+
+`-continue` continues after invariant violations; `-deadlock` disables the separate built-in deadlock check so it does not stop the run. The invariant still reports all-waiting states. These options are not exposed by the browser playground, whose partial state count will be smaller.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------

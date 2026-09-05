@@ -3,14 +3,14 @@ slug: safety
 expect: violation
 title: "Safety - Detecting Deadlocks"
 section: blocking-queue
-commitSha: "ce99d16a"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/ce99d16a"
+commitSha: "2fa48399"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/2fa48399"
 ---
-Now we add an **invariant** to automatically detect deadlocks instead of manually inspecting the state graph.
+Now we add an **invariant** that explicitly expresses deadlock freedom for this model. TLC already detects deadlocks automatically; the invariant gives us a state predicate to study and, in later upstream steps, prove.
 
 ## What Changed
 
-An Invariant definition was added to the spec, and INVARIANT was added to the configuration.
+The definitions `Invariant` and `TypeInv` were added to the spec and enabled with `INVARIANT` entries in the configuration.
 
 ## The Deadlock Invariant
 
@@ -22,9 +22,18 @@ A **safety property** says "something bad never happens." Invariants are the pri
 
 ## TLC Output
 
-TLC now finds the deadlock for configuration p1c2b1:
+The supplied configuration is **p4c3b3**, matching the Java application's defaults. It produces a longer counterexample. The upstream tutorial also shows the shorter **p1c2b1** trace below. To reproduce that example, change only the constants to:
 
-\`\`\`
+```cfg
+CONSTANTS
+    BufCapacity = 1
+    Producers = {p1}
+    Consumers = {c1,c2}
+```
+
+Keep `INIT`, `NEXT`, and both `INVARIANT` entries in the configuration.
+
+```text
 Error: Invariant Invariant is violated.
 State 1: <Initial predicate>
 /\ buffer = <<>>
@@ -57,9 +66,13 @@ State 7:
 State 8:
 /\ buffer = <<>>
 /\ waitSet = {p1, c1, c2}
-\`\`\`
+```
 
 Note that the Java app with p2c1b1 usually deadlocks only after thousands of log statements, which is considerably longer than the error trace above. This makes it more difficult to understand the root cause.
+
+## Expected Result
+
+TLC reports that `Invariant` is violated: all producers and consumers are waiting. `TypeInv` still holds, illustrating that well-typed states need not be deadlock-free. Try the smaller configuration above to follow each step of the counterexample.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------

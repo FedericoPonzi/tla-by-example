@@ -3,8 +3,8 @@ slug: introduction
 expect: success
 title: Introduction
 section: blocking-queue
-commitSha: "11410864"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/11410864"
+commitSha: "cc8acf5c"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/cc8acf5c"
 ---
 Tutorial-style talk **"Weeks of debugging can save you hours of TLA+"**.
 
@@ -14,27 +14,46 @@ This section is an adaptation of the tutorial by Markus Kuppe from the [Blocking
 
 The problem we model is a **bounded buffer** (blocking queue) shared between producer and consumer threads. Producers add items to the buffer. Consumers remove items from the buffer. When the buffer is full, producers wait. When the buffer is empty, consumers wait.
 
+## Following the Upstream Tutorial
+
+These lessons follow upstream v01-v08a and v11-v13. The optional trace-animation steps in between are omitted. Each lesson links to its corresponding upstream commit; the upstream history is periodically rewritten, so use the linked revision rather than assuming the latest branch represents that step.
+
+The Java and C tabs are abridged versions of the original v01 implementations. Both use a single wait set/condition and can deadlock; the C tab omits the upstream logging. The playground previews the minimal v02 model because v01 introduces the implementation before the TLA+ spec.
+
+The browser runs standalone specifications, not the desktop debugger or trace animator. The final three lessons omit upstream's animation-only configuration entries while retaining the algorithm and its safety invariants.
+
 ## Running the Java Implementation
 
-```
+Run these commands in a new clone with a JDK installed:
+
+```bash
 git clone https://github.com/lemmy/BlockingQueue.git
 cd BlockingQueue
-java -cp impl/src/ org.kuppe.App
+git switch --detach cc8acf5c8c47eccb6064941937567353b414ddc4
+mkdir -p build/classes
+javac -d build/classes impl/src/org/kuppe/*.java
+java -cp build/classes org.kuppe.App
 ```
 
-This launches the application with the default configuration **p4c3b3** (4 producers, 3 consumers, buffer capacity 3). The application may deadlock - that is the bug we will investigate with TLA+.
+This launches the original application with the default configuration **p4c3b3** (4 producers, 3 consumers, buffer capacity 3). It runs indefinitely and may deadlock; stop it with Ctrl+C. The current upstream branch already includes later fixes, which is why selecting the historical revision matters.
 
 ## Running the C Implementation
 
-```
+In the same historical checkout, after stopping Java, use GCC and Make:
+
+```bash
 cd impl
 make
 ./producer_consumer 3 4 3
 ```
 
-This is a C implementation of the same blocking buffer problem.
+This runs the original single-condition C implementation with the same parameters. Stop it with Ctrl+C.
 
 You can follow along using the [TLA+ VS Code extension](https://marketplace.visualstudio.com/items?itemName=alygin.vscode-tlaplus) or via [Gitpod](https://gitpod.io/) / [GitHub Codespaces](https://github.com/features/codespaces).
+
+## Expected Result
+
+The playground's smaller **p1c1b1** model completes without a deadlock. This does not establish that the implementation is safe for the larger **p4c3b3** configuration. Try adding a second consumer to the configuration; the later lessons explain the resulting deadlock.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------
@@ -278,7 +297,7 @@ uint32_t buff_size, numProducers, numConsumers;
 uint32_t *buffer;
 uint32_t fillIndex, useIndex, count = 0;
 
-pthread_cond_t empty, full; 
+pthread_cond_t modify;
 pthread_mutex_t mutex;
 
 void append(uint32_t value) {
@@ -298,10 +317,10 @@ void *producer (void * arg) {
 while(1) {
 pthread_mutex_lock(&mutex);
 while (count == buff_size) {
-    pthread_cond_wait(&empty, &mutex);
+    pthread_cond_wait(&modify, &mutex);
 }
 append(rand() % (10));
-pthread_cond_signal(&full);
+pthread_cond_signal(&modify);
         pthread_mutex_unlock(&mutex);
 }
 }
@@ -311,10 +330,10 @@ uint32_t id = *((uint32_t *) arg);
 while(1) {
 pthread_mutex_lock(&mutex);
 while (count == 0) {
-pthread_cond_wait(&full, &mutex);
+pthread_cond_wait(&modify, &mutex);
 }
 head();
-pthread_cond_signal(&empty);
+pthread_cond_signal(&modify);
 pthread_mutex_unlock(&mutex);
 } 
 }
@@ -330,8 +349,7 @@ numProducers = atoi(argv[2]);
 numConsumers = atoi(argv[3]);
 
 pthread_mutex_init(&mutex, NULL);
-pthread_cond_init(&empty, NULL);
-pthread_cond_init(&full, NULL);
+pthread_cond_init(&modify, NULL);
 
 buffer = malloc(sizeof(int) * buff_size);
 pthread_t prods[numProducers], cons[numConsumers];

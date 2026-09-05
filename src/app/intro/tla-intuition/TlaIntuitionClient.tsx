@@ -471,7 +471,7 @@ export default function TlaIntuitionClient({ description, spec, prev, next }: Pr
                   The Counterexample Trace
                 </h2>
                 <p className="text-gray-700 leading-relaxed mb-3">
-                  Because TLC uses BFS, the violation it finds is along a{" "}
+                  With one-worker BFS for this invariant, the violation is along a{" "}
                   <strong>shortest path</strong>. TLC reports this as a{" "}
                   <strong>counterexample trace</strong> — the{" "}
                   <span className="text-red-500 font-semibold">red path</span> on
@@ -504,16 +504,20 @@ export default function TlaIntuitionClient({ description, spec, prev, next }: Pr
                   Why This Matters
                 </h2>
                 <p className="text-gray-700 leading-relaxed mb-3">
-                  Traditional testing checks a few paths through your system. TLC
-                  checks <strong>all of them</strong> systematically. It explored{" "}
-                  {GRAPH.expansionSteps.length} states before finding the violation
-                  — and because of BFS, the counterexample is guaranteed to be the{" "}
-                  <strong>shortest</strong> possible path to the bug.
+                  Traditional testing samples executions. TLC systematically
+                  explores the <strong>reachable state graph</strong> of the
+                  configured model. This animation expanded{" "}
+                  {GRAPH.expansionSteps.length} states before finding the violation.
+                  One-worker BFS gives a <strong>shortest</strong> counterexample
+                  for this invariant check; it does not enumerate every path
+                  through a graph with cycles.
                 </p>
                 <p className="text-gray-700 leading-relaxed mb-3">
-                  For real concurrent systems, the state space can be millions of
-                  states — and TLC will explore them all, finding subtle bugs that
-                  testing would miss.
+                  A completed finite exploration establishes the enabled
+                  invariants for the chosen model and assumptions. It is not a
+                  proof for arbitrary system sizes or for the implementation.
+                  Large models can exhaust available resources, and an unbounded
+                  state space may never finish.
                 </p>
                 <div className="flex gap-2 mt-4 mb-2">
                   <BackBtn />

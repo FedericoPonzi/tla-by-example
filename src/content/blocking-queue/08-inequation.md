@@ -3,8 +3,8 @@ slug: inequation
 expect: violation
 title: "Deadlock-Free Inequation"
 section: blocking-queue
-commitSha: "8e536cba"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/8e536cba"
+commitSha: "80b23f9e"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/80b23f9e"
 ---
 Now we infer the **inequation** under which the system is deadlock-free.
 
@@ -14,15 +14,35 @@ The spec and config are extended to systematically check when the deadlock invar
 
 ## Key Insight
 
-TLC finds that the system is deadlock-free when BufCapacity >= (Producers + Consumers - 1). This is a precise characterization discovered through model checking.
+The relationship stated in the upstream tutorial is that the original single-wait-set algorithm is deadlock-free if and only if:
 
-We run TLC with the \`-continue\` option to not stop state space exploration after a violation has been found, asking TLC to find all violations. A bit of analysis reveals that BlockingQueue is deadlock-free iff \`2*BufCapacity >= Cardinality(Producers \\union Consumers)\`.
+```tla
+2 * BufCapacity >= Cardinality(Producers \cup Consumers)
+```
+
+For example, two producers and two consumers need capacity at least two. In this lesson's multi-configuration model, apply the relationship to the chosen variables `bufCapacity`, `producers`, and `consumers`, not just to their upper-bound constants.
+
+We infer this relationship from finite data points. Model checking these bounds is not, by itself, a mathematical proof for all process counts and capacities.
+
+## Collecting the Data Locally
+
+Save this lesson's spec and configuration as `BlockingQueue.tla/.cfg` alongside `tla2tools.jar`, then use the upstream workflow:
+
+```bash
+java -jar tla2tools.jar -workers 1 -deadlock -continue BlockingQueue | grep InvVio | sort | uniq
+```
+
+`-continue` keeps exploring after invariant violations. `-deadlock` disables the separate built-in deadlock check; our invariant still identifies the all-waiting states. Each `InvVio` record contains the chosen capacity and total thread count.
 
 ![ContinueInequation](/bq-images/ContinueInequation.svg)
 
 Collecting even more data, we can correlate the length of the error trace with the constants:
 
 ![TraceLengthCorrelation](/bq-images/TraceLengthCorrelation.svg)
+
+## Expected Result
+
+The browser reports the first `Invariant` violation and prints an `InvVio` record. It does not expose `-continue`, so it will not collect all the data shown in the upstream plots. Try the local command to collect all violating configurations within the supplied bounds.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------
