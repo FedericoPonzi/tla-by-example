@@ -23,10 +23,9 @@ Properties that must hold in **every** reachable state:
 
 ```
 INVARIANT TypeOK
-INVARIANT NoDeadlock
 ```
 
-If TLC finds a state where an invariant is FALSE, it reports an error with a trace showing how it got there.
+`TypeOK` must be defined in the spec. Defining it does not enable the check by itself. If TLC finds a state where an enabled invariant is FALSE, it reports an error with a trace showing how it got there.
 
 ## CONSTANT
 
@@ -39,11 +38,19 @@ CONSTANT Procs = {p1, p2, p3}
 
 ## PROPERTY (Temporal Properties)
 
-For liveness checks (things that must **eventually** happen):
+`PROPERTY` enables a temporal formula defined in the spec. These can express safety as well as liveness. For example, define:
 
+```tla
+AlwaysNonnegative == [](counter >= 0)
 ```
-PROPERTY Liveness
+
+Then enable it in the configuration:
+
+```cfg
+PROPERTY AlwaysNonnegative
 ```
+
+`[]` means "always", so this is a safety property. `<>` means "eventually" and is used for liveness properties. Eventual progress often requires explicit fairness assumptions; `INIT` and `NEXT` alone do not guarantee it. The Basic Operators lesson also uses `PROPERTY` for a condition on every transition.
 
 ## SYMMETRY
 
@@ -54,7 +61,9 @@ CONSTANT Procs = {p1, p2, p3}
 SYMMETRY Perms
 ```
 
-Where `Perms` is defined as `Permutations(Procs)` in your spec.
+Here `Procs` must be declared as a constant, and `Perms == Permutations(Procs)` must be defined in the spec. `Permutations` comes from the `TLC` module, so add `TLC` to `EXTENDS`.
+
+Only use symmetry when the specification and checked properties are invariant under renaming those process identities. TLC does not verify that assumption, and symmetry should not be used for liveness checking.
 
 ## CHECK_DEADLOCK
 
@@ -64,9 +73,15 @@ By default, TLC checks for deadlocks (states with no successor). You can disable
 CHECK_DEADLOCK FALSE
 ```
 
+This is a built-in check, not an invariant named `NoDeadlock`. Disable it only when terminal states are intentional; it does not make an infinite model finite.
+
 ## Try It
 
 Try editing the configuration on the right. Change the constant `Size` to different values and see how the state space changes.
+
+## Expected Result
+
+With `Size = 5`, TLC completes without errors and finds 6 distinct states (`counter` from 0 to 5). Try `Size = 0`: the initial state is well-typed, but neither `Inc` nor `Dec` is enabled, so TLC reports a deadlock.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE ConfigDemo --------------------------------

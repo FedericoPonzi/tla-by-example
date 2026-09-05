@@ -3,8 +3,8 @@ slug: larger-config
 expect: violation
 title: "Larger Configuration"
 section: blocking-queue
-commitSha: "7d05fdfa"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/7d05fdfa"
+commitSha: "607a169d"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/607a169d"
 ---
 We now use a slightly different configuration (1 producer, 2 consumers, buffer capacity 1) which lets us visually spot the deadlock.
 
@@ -14,7 +14,7 @@ Only the configuration changed - the spec is the same. This demonstrates the pow
 
 ## Try It
 
-Run TLC and notice how the state space grows compared to v02.
+Run TLC and notice how the state space grows compared to the previous lesson (upstream v02).
 
 ## State Graph
 
@@ -22,9 +22,13 @@ Slightly larger configuration with which we can visually spot the deadlock:
 
 ![State graph p1c2b1](/bq-images/p1c2b1.svg)
 
-BlockingQueueDebug.tla/.cfg shows how to interactively explore a state graph with TLC in combination with GraphViz:
+Upstream also supplies `BlockingQueueDebug.tla/.cfg` for a different configuration, **p2c1b1**. The following recording uses desktop TLC with GraphViz; that interactive graph explorer is not part of the browser playground:
 
 ![Explore state graph](/bq-images/v03-StateGraph.gif)
+
+## Expected Result
+
+TLC reports **Deadlock reached** for the supplied p1c2b1 model. Its built-in deadlock check is enabled by default, even though this version has no explicit invariant. Try swapping the numbers of producers and consumers; the next lesson explores that configuration.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------

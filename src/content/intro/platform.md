@@ -10,8 +10,10 @@ Welcome to TLA+ By Example! This platform lets you learn TLA+ by reading explana
 
 On the right side of this page, you'll see the **playground**. It has two tabs:
 
-- **Spec.tla** - the TLA+ specification you're writing
-- **Spec.cfg** - the TLC model checker configuration
+- **DieHard.tla** - the TLA+ specification you're writing
+- **DieHard.cfg** - the TLC model checker configuration
+
+Tab filenames follow the module name, so they differ between lessons.
 
 Click **▶ Run TLC** to model-check the specification. The output will appear in the panel at the bottom of the playground.
 
@@ -27,11 +29,11 @@ A TLA+ specification describes:
 
 ## What is TLC?
 
-TLC is the **model checker** for TLA+. When you click **▶ Run TLC**, it systematically explores **every reachable state** of your specification by starting from the initial state and following all possible transitions.
+TLC is a **model checker** for TLA+. When you click **▶ Run TLC**, it starts from all states satisfying the initial predicate and systematically explores the reachable state graph of the configured model.
 
-At each state, TLC checks your **invariants** - properties you've declared must always be true. If TLC finds a state that violates an invariant, it stops and shows you the exact sequence of steps that led to the violation. If no violations are found, TLC reports that all states satisfy the invariants.
+At each state, TLC checks the **invariants enabled in the configuration**. If one is false, TLC stops and shows the sequence of steps that led to the violation. If exploration of the finite model completes without errors, all its reachable states satisfy those invariants.
 
-This exhaustive approach means TLC doesn't test random scenarios - it checks **all of them**. That's what makes formal verification more powerful than traditional testing.
+Unlike testing a selection of executions, this checks the entire reachable graph of that finite model. A graph with cycles can represent infinitely many behaviors; TLC does not enumerate every possible path separately. The result applies to the chosen constants, assumptions, and properties, not automatically to arbitrary system sizes or to an implementation. Unbounded models may never finish.
 
 ## Try It Now
 
@@ -41,9 +43,13 @@ The playground on the right has a classic example: the **DieHard** water jugs pu
 
 Click **▶ Run TLC** to see TLC find a solution (it will report an invariant violation - which is actually the solution!).
 
+## Expected Result
+
+TLC reports that `NotSolved` is violated and shows a trace ending with `big = 4`. Try removing only `INVARIANT NotSolved` from the configuration: TLC will instead complete its exploration while checking `TypeOK`.
+
 ## Understanding the TLC Output
 
-TLC runs entirely **in your browser** using WebAssembly - nothing is sent to a server. After clicking Run TLC, you'll see output like the following. Here's how to read it:
+TLC runs **in your browser** via CheerpJ's Java runtime; your spec and configuration are not submitted to a model-checking server. The runtime itself is downloaded from a CDN. After clicking Run TLC, you'll see output like the following. Version details and source locations may differ:
 
 ### Header
 
@@ -53,7 +59,7 @@ Running breadth-first search Model-Checking with fp 62
 and seed ... with 1 worker on 1 cores with 2048MB heap
 ```
 
-This tells you the TLC version and that it's using **breadth-first search** - it explores all states at depth 1, then depth 2, and so on. This means when TLC finds a violation, the error trace is always the **shortest possible path** to the error.
+This tells you the TLC version and that it's using **breadth-first search** - it explores states layer by layer. For this invariant check with one worker, the counterexample is a **shortest path** to a violation. This guarantee does not extend to every TLC mode or to arbitrary temporal-property counterexamples.
 
 ### Parsing and Semantic Processing
 
@@ -113,7 +119,7 @@ Reading this trace, you can follow the solution step by step: fill the big jug, 
 TLC finished with exit code: 2110
 ```
 
-Exit code `2110` means TLC found an invariant violation. An exit code of `0` means all states were checked and no violations were found.
+The browser wrapper labels TLC's internal result code as an "exit code": `2110` identifies an invariant violation. This is not the operating-system exit status of command-line TLC, which uses `12` for a safety violation. For this finite model, a result of `0` means exploration completed without an error.
 
 ## Follow Along Locally
 

@@ -4,29 +4,14 @@ import { blockingQueueLessons } from "@/content/blocking-queue";
 import { runTlcInBrowser, classifyTlcOutput } from "./tlc-runner";
 
 /**
- * Pluggable, per-lesson in-browser TLC regression suite.
- *
- * Every lesson that declares an `expect` field in its markdown frontmatter
- * (see src/lib/lessons.ts) is model-checked in a real browser via the CheerpJ
- * worker, and its outcome is asserted:
- *
- *   expect: success    -> TLC completes with no error
- *   expect: violation  -> TLC reports a counterexample (invariant / deadlock)
- *
- * To add coverage for a lesson, add `expect: success` or `expect: violation`
- * to its frontmatter — no test code changes required. Lessons without an
- * `expect` (e.g. animation-only lessons, lessons with no spec/cfg, or very
- * large models such as `intro/records` whose state space is impractical to
- * explore in-browser) are skipped automatically.
- *
  * This guards against the class of CheerpJ regression where in-browser TLC
  * silently stops after computing initial states and misses counterexamples.
  */
 
-const lessons = [...introLessons, ...blockingQueueLessons].filter((l) => l.expect);
+const lessons = [...introLessons, ...blockingQueueLessons].filter((l) => l.spec && l.cfg);
 
 test.describe("Lesson TLC regression", () => {
-  test("at least one lesson declares an expected outcome", () => {
+  test("at least one runnable lesson is registered", () => {
     expect(lessons.length).toBeGreaterThan(0);
   });
 
@@ -44,4 +29,16 @@ test.describe("Lesson TLC regression", () => {
       }
     });
   }
+
+  test("intro/basic-operators rejects a green-to-red transition", async ({ page }) => {
+    const lesson = introLessons.find((l) => l.slug === "basic-operators")!;
+    const spec = lesson.spec.replace(
+      'light = "yellow"',
+      'light \\in {"yellow", "green"}'
+    );
+    expect(spec).not.toBe(lesson.spec);
+    await page.goto("/");
+    const output = await runTlcInBrowser(page, spec, lesson.cfg);
+    expect(output).toMatch(/(?:Action property|Temporal properties).*violated/);
+  });
 });

@@ -57,6 +57,10 @@ Front(s)      == Head(s)
 
 The spec on the right models a simple bounded stack.
 
+## Expected Result
+
+TLC completes without errors. `Push` is enabled only below `MaxSize`, and `Pop` only for a nonempty stack. Try removing the size guard from `Push`; TLC will report a violated invariant when the stack exceeds `MaxSize`.
+
 ---TLA_BY_EXAMPLE_SPEC---
 ------------------------------ MODULE Stack ----------------------------------
 EXTENDS Naturals, Sequences

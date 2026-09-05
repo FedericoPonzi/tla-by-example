@@ -39,7 +39,7 @@ Everything after the footer is ignored by TLA+ tools. By convention, this space 
 ```
 ========================
 Modification History
-* Added Bound invariant to limit state space
+* Added Bound invariant to detect reaching the limit
 * Initial version with basic counter
 ```
 
@@ -83,8 +83,14 @@ To use these operators, add `EXTENDS TLC` to your module.
 
 The spec on the right shows a module with text before the header and after the footer. It also uses `PrintT` to print the value of `x` on each step. Notice how the module name matches the tab filename. Try modifying it and running TLC to see what happens.
 
+`Spec == Init /\ [][Next]_x` is the conventional temporal form: start in `Init`, then always (`[]`) take a `Next` step or leave `x` unchanged. Such an unchanged step is called **stuttering**. This lesson's configuration uses `INIT Init` and `NEXT Next` directly; `SPECIFICATION Spec` is an alternative.
+
+## Expected Result
+
+TLC reports that `Bound` is violated when `x = 5`. The invariant detects that state; it does not prevent the counter from reaching it. Try changing the limit in `Bound` and following the new trace. Removing `Bound` entirely leaves an unbounded exploration, not a finite successful run.
+
 ---TLA_BY_EXAMPLE_SPEC---
-A simple counter that increments from 0 up to a bound.
+A counter that increments until TLC reports an invariant violation.
 Demonstrates the basic structure of a TLA+ module.
 ----------------------------- MODULE MySpec ----------------------------------
 (***************************************************************************)
@@ -107,7 +113,7 @@ Bound == x < 5
 
 =============================================================================
 Modification History
-* Initial version with a simple bounded counter
+* Initial version with a counter and a bound invariant
 
 ---TLA_BY_EXAMPLE_CFG---
 INIT Init

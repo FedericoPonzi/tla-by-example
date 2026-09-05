@@ -1,27 +1,32 @@
 ---
 slug: notify-all
+expect: success
 title: "Notify All"
 section: blocking-queue
-commitSha: "a81e4914"
-commitUrl: "https://github.com/lemmy/BlockingQueue/commit/a81e4914"
+commitSha: "8ab5eb37"
+commitUrl: "https://github.com/lemmy/BlockingQueue/commit/8ab5eb37"
 ---
-Another bugfix: switch from notify() to notifyAll() - always wake up all waiting threads.
+Upstream v12 replaces `notify()` with `notifyAll()` on successful queue operations.
 
 ## What Changed
 
-Instead of non-deterministically notifying one thread, we now notify **all** waiting threads. This is the standard fix for the lost-wakeup problem.
+Instead of notifying one thread, successful `Put` and `Get` operations notify **all** waiting threads. The independent notification step from the previous attempted fix is removed.
 
-## The Lost Wakeup Problem
+## Waking the Wrong Kind of Thread
 
 With notify(), the JVM might wake up a thread that cannot make progress (e.g., waking a producer when the buffer is already full). That thread goes back to waiting, and the actual thread that could make progress is never woken - leading to deadlock.
 
 ## The Fix
 
-notifyAll() ensures every waiting thread gets a chance to check whether it can proceed.
+`notifyAll()` makes all waiters eligible to reacquire the shared lock and recheck their conditions. This fixes the modeled deadlock, but waking threads that cannot proceed can add contention. It does not by itself guarantee fair scheduling or freedom from starvation.
 
 As a bonus exercise, check if it is necessary to notify all waiting threads in both Put and Get.
 
-Note that this is the proposed solution to the bug in Challenge 14 of the c2 extreme programming wiki. To the best of my knowledge, not a single comment mentions that just one notifyAll suffices. Neither does anybody mention a more elegant fix that has no performance implications (see next step).
+The upstream tutorial notes that using `notifyAll()` in just one of the two operations suffices for this deadlock fix. Try keeping `NotifyAll` in one operation and restoring the earlier single-thread `Notify` in the other. The next lesson avoids waking the wrong kind of thread in the first place.
+
+## Expected Result
+
+TLC completes without a deadlock or invariant violation for the supplied p4c3b3 model. This is a finite-model result, not a proof for every configuration or a liveness guarantee.
 
 ---TLA_BY_EXAMPLE_SPEC---
 --------------------------- MODULE BlockingQueue ---------------------------
